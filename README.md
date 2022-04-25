@@ -16,12 +16,21 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
   
 ## Method to collect data with carla:
   1. Open a terminal in the main installed `carla` package folder. Run the following command to execute package file and start the simulation:
-  ``` ./CarlaUE4.sh  ``` 
+  ``` 
+  ./CarlaUE4.sh  
+  ``` 
   2. Copy and paste the file `src/utils/datacollector.py`(in this repo) inside your installed carla package at location `PythonAPI/examples` folder.
-  3. Open another terminal inside `PythonAPI/example` and run `datacollector.py` with terminal command:
-  ``` python3 datacollector.py --sync -m Town01 -l --res 1024x64 ```
-  
+  3. Open another terminal inside `PythonAPI/example` and run following command to start collecting data:
+  ``` 
+  python3 datacollector.py --sync -m Town01 -l --res 1024x64  
+  ```
+  4. Optional- Run in parallel in new terminal 
+  ```
+  python3 generate_traffic.py -n 50 -w 50      # spawn 50 vehicles and pedestrians 
+  python3 dynamic_weather.py                   # collect the dataset using varying weather conditions. 
+  ```
 ## Folder structure:
+```
 /PythonAPI/examples/dataset/
           └── sequences/
                   ├── Town01/
@@ -64,12 +73,10 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
                   │   │     │     ├── ply_files 
                   │   │     │     │    ├ WorldSnapshot(frame=26)_3.ply
                   │   │     │     │    ├ WorldSnapshot(frame=27)_3.ply
-                  │   │     │     ├── updated_ground_truth                      ## Label remapping to be in accordance with Semantic KITTI labels
+                  │   │     │     ├── updated_ground_truth                      # Label remapping to be in accordance with Semantic KITTI labels
                   │   │     │     │    ├ WorldSnapshot(frame=26)_3_new.label
                   │   │     │     │    ├ WorldSnapshot(frame=27)_3_new.label
                   ├── Town02/
                   ├── Town03/
-                  .
-                  .
-                  .
+
             
