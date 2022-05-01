@@ -723,9 +723,10 @@ def do_range_projection(args, proj_fov_up, proj_fov_down, snapshot, image_data, 
     fov_up = proj_fov_up / 180.0 * np.pi  # field of view up in rad
     fov_down = proj_fov_down / 180.0 * np.pi  # field of view down in rad
     fov = abs(fov_down) + abs(fov_up)  # get field of view total in rad
-    proj_W = args.width
-    proj_H = args.height
-
+    # proj_W = args.width
+    # proj_H = args.height
+    proj_W = 1024
+    proj_H = 64
     #range information
     depth = np.linalg.norm(point_cloud_xyz, 2, axis=1)
 
@@ -739,8 +740,8 @@ def do_range_projection(args, proj_fov_up, proj_fov_down, snapshot, image_data, 
     proj_xyz = np.full((proj_H, proj_W, 3), -1, dtype=np.float32)
     proj_cosine = np.full((proj_H, proj_W), -1, dtype=np.float32)
     proj_idx = np.full((proj_H, proj_W), -1, dtype=np.uint32)
-    proj_sem_label = np.full((proj_H, proj_W), -1, dtype=np.uint32)
-    proj_inst_label = np.full((proj_H, proj_W), -1, dtype=np.uint32)
+    proj_sem_label = np.full((proj_H, proj_W), 0, dtype=np.uint32)
+    proj_inst_label = np.full((proj_H, proj_W), 0, dtype=np.uint32)
     proj_sem_color = np.full((proj_H, proj_W, 3), 0, dtype=np.float32)
     proj_intensity = np.full((proj_H, proj_W), -1, dtype=np.float32)
 
@@ -815,7 +816,7 @@ def do_range_projection(args, proj_fov_up, proj_fov_down, snapshot, image_data, 
     # Save the image using Pillow module.
     image = (np.asarray(proj_sem_color)).astype(np.uint8)
     image = Image.fromarray(image)
-    image.save("dataset/sequences/Town02/lidar_semseg/images/%08d.png" % image_data.frame)
+    image.save("dataset/sequences/Town04/lidar_semseg/images/%08d.png" % image_data.frame)
 
 
 # ==============================================================================
@@ -911,7 +912,7 @@ class CameraManager(object):
             (carla.Transform(
                 carla.Location(x=-5.5, z=2.5), carla.Rotation(pitch=8.0)), attachment.SpringArm),
             (carla.Transform(
-                carla.Location(x=1.6, z=1.7)), attachment.Rigid),
+                carla.Location(x=0.0, z=2.1)), attachment.Rigid), #x=1.6, z=1.7
             (carla.Transform(
                 carla.Location(x=5.5, y=1.5, z=1.5)), attachment.SpringArm),
             (carla.Transform(
@@ -934,11 +935,13 @@ class CameraManager(object):
                 if blp.has_attribute('gamma'):
                     blp.set_attribute('gamma', str(gamma_correction))
             elif item[0].startswith('sensor.lidar.ray_cast_semantic'):
+                blp.set_attribute('role_name', 'semantic_lidar')
+                blp.set_attribute('rotation_frequency', '20.0')
                 blp.set_attribute('range', '100.0')
                 blp.set_attribute('channels', '64')
                 blp.set_attribute('upper_fov', '3.0')
                 blp.set_attribute('lower_fov', '-25.0')
-                blp.set_attribute('points_per_second', '660000')
+                blp.set_attribute('points_per_second', '2600000') #660000 1300000
             item.append(blp)
         self.index = None
 
@@ -1101,6 +1104,7 @@ def game_loop(args):
         os.makedirs(path_depth)
         os.makedirs(path_semseg)
         os.makedirs(path_pcimage)
+        print(sensor_list[3])
 
         while True:
 

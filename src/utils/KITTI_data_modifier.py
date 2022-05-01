@@ -2,52 +2,56 @@ import numpy as np
 import os
 from PIL import Image
 
+KITTI_LABEL_COLORS = np.array([
+    (0, 0, 0),
+    (0, 0, 142),
+    (220, 20, 60)
+])
+# KITTI_LABEL_COLORS = {
+#         0: [0, 0, 0],
+#         1: [255, 0, 0],
+#         10: [100, 150, 245],
+#         11: [100, 230, 245],
+#         13: [100, 80, 250],
+#         15: [30, 60, 150],
+#         16: [0, 0, 255],
+#         18: [80, 30, 180],
+#         20: [0, 0, 255],
+#         30: [255, 30, 30],
+#         31: [255, 40, 200],
+#         32: [150, 30, 90],
+#         40: [255, 0, 255],
+#         44: [255, 150, 255],
+#         48: [75, 0, 75],
+#         49: [175, 0, 75],
+#         50: [255, 200, 0],
+#         51: [255, 120, 50],
+#         52: [255, 150, 0],
+#         60: [150, 255, 170],
+#         70: [0, 175, 0],
+#         71: [135, 60, 0],
+#         72: [150, 240, 80],
+#         80: [255, 240, 150],
+#         81: [255, 0, 0],
+#         99: [50, 255, 255],
+#         252: [100, 150, 245],
+#         256: [0, 0, 255],
+#         253: [255, 40, 200],
+#         254: [255, 30, 30],
+#         255: [150, 30, 90],
+#         257: [100, 80, 250],
+#         258: [80, 30, 180],
+#         259: [0, 0, 255]}
 
-# color_map = {
-#   0: (0, 0, 0),
-#   1: (255, 0, 0),
-#   10: (100, 150, 245),
-#   11: (100, 230, 245),
-#   13: (100, 80, 250),
-#   15: (30, 60, 150),
-#   16: (0, 0, 255),
-#   18: (80, 30, 180),
-#   20: (0, 0, 255),
-#   30: (255, 30, 30),
-#   31: (255, 40, 200),
-#   32: (150, 30, 90),
-#   40: (255, 0, 255),
-#   44: (255, 150, 255),
-#   48: (75, 0, 75),
-#   49: (175, 0, 75),
-#   50: (255, 200, 0),
-#   51: (255, 120, 50),
-#   52: (255, 150, 0),
-#   60: (150, 255, 170),
-#   70: (0, 175, 0),
-#   71: (135, 60, 0),
-#   72: (150, 240, 80),
-#   80: (255, 240, 150),
-#   81: (255, 0, 0),
-#   99: (50, 255, 255),
-#   252: (100, 150, 245),
-#   256: (0, 0, 255),
-#   253: (255, 40, 200),
-#   254: (255, 30, 30),
-#   255: (150, 30, 90),
-#   257: (100, 80, 250),
-#   258: (80, 30, 180),
-#   259: (0, 0, 255)}
-
-def do_projection(velo_path, proj_velo_path, label_path, proj_label_path):
-    H = 64
-    W = 1024
-    fov_up = 3.0
-    fov_down = -25.0
+def do_projection(velo_path, proj_velo_path, label_path, proj_label_path, proj_labelimg_path):
     bin_num = 0
     label_num = 0
     # img_num = 0
     for file in sorted(os.listdir(velo_path)):
+        H = 64
+        W = 1024
+        fov_up = 3.0
+        fov_down = -25.0
         try:
             if file.endswith(".bin"):
                 original_bin = np.fromfile(os.path.join(velo_path, file), np.float32)
@@ -67,7 +71,7 @@ def do_projection(velo_path, proj_velo_path, label_path, proj_label_path):
                 unproj_range = np.zeros((0, 1), dtype=np.float32)
                 proj_xyz = np.full((proj_H, proj_W, 3), -1, dtype=np.float32)
                 proj_idx = np.full((proj_H, proj_W), -1, dtype=np.uint32)
-                proj_sem_label = np.full((proj_H, proj_W), -1, dtype=np.uint32)
+                proj_sem_label = np.full((proj_H, proj_W), 0, dtype=np.uint32)  #Changed from -1
                 # proj_sem_color = np.full((proj_H, proj_W, 3), 0, dtype=np.float32)
                 proj_remission = np.full((proj_H, proj_W), -1, dtype=np.float32)
 
@@ -80,7 +84,7 @@ def do_projection(velo_path, proj_velo_path, label_path, proj_label_path):
                 # sem_label_color = color_map[semantic_label]
 
                 # get angles of all points
-                yaw = np.arctan2(scan_y, scan_x)
+                yaw = -np.arctan2(scan_y, scan_x)
                 pitch = np.arcsin(scan_z / depth)
 
                 # get projections in image coords
@@ -97,16 +101,27 @@ def do_projection(velo_path, proj_velo_path, label_path, proj_label_path):
                 proj_x = np.minimum(proj_W - 1, proj_x)
                 proj_x = np.maximum(0, proj_x).astype(np.uint32)  # in [0,W-1]
                 proj_x = np.copy(proj_x)  # store a copy in orig order
+                # print(np.shape(np.unique(proj_x)))
 
                 # u
                 proj_y = np.floor(proj_y)
                 proj_y = np.minimum(proj_H - 1, proj_y)
                 proj_y = np.maximum(0, proj_y).astype(np.uint32)  # in [0,H-1]
                 proj_y = np.copy(proj_y)  # store a copy in original order
+                # print(np.unique(proj_y))
 
                 # copy of depth in original order
                 unproj_range = np.copy(depth)
                 indices = np.arange(depth.shape[0])
+
+                # order in decreasing depth
+                # order = np.argsort(depth)[::-1]
+                # depth = depth[order]
+                # indices = indices[order]
+                # point_cloud_xyz = point_cloud_xyz[order]
+                # remission = remission[order]
+                # proj_y = proj_y[order]
+                # proj_x = proj_x[order]
 
                 proj_range[proj_y, proj_x] = depth
                 proj_xyz[proj_y, proj_x] = point_cloud_xyz
@@ -117,12 +132,9 @@ def do_projection(velo_path, proj_velo_path, label_path, proj_label_path):
 
                 # creating input tensor
                 create_KITTI_input_tensor(proj_velo_path, bin_num, proj_xyz, proj_remission, proj_range)
-                modify_semantic_label(proj_label_path, proj_sem_label, label_num)
-
-                # # Save the image using Pillow module.
-                # image = (np.asarray(proj_sem_color)).astype(np.uint8)
-                # image = Image.fromarray(image)
-                # image.save("%08d.png" % img_num)
+                proj_label = modify_semantic_label(proj_label_path, proj_sem_label, label_num)
+                create_proj_image(proj_labelimg_path, proj_label, label_num)
+                # create_proj_image(proj_labelimg_path, proj_sem_label, label_num)
 
                 bin_num += 1
                 label_num += 1
@@ -136,11 +148,12 @@ def create_KITTI_input_tensor(proj_path, bin_num, proj_xyz, proj_intensity, proj
         os.makedirs(proj_path)
     proj_filename = "new_%06d.bin" % bin_num
     filepath_second = os.path.join(proj_path, proj_filename)
-    print(filepath_second)
+    print(proj_filename)
     file = open(os.path.join(proj_path, proj_filename), "w")
     proj_intensity = np.expand_dims(proj_intensity, axis=2)
     proj_range = np.expand_dims(proj_range, axis=2)
     input_tensor = np.concatenate((proj_xyz, proj_intensity, proj_range), axis=2)
+    # print(np.shape(input_tensor))
     input_tensor.tofile(file)
     file.close()
 
@@ -158,7 +171,7 @@ def modify_semantic_label(proj_path, proj_label, label_num):
         os.makedirs(proj_path)
     proj_filename = "new_%06d.label" % label_num
     filepath_second = os.path.join(proj_path, proj_filename)
-    print(filepath_second)
+    print(proj_filename)
     proj_label = proj_label.reshape(-1)
     for i in range(len(proj_label)):
         if proj_label[i] & 0xFFFF in vehicle:
@@ -171,14 +184,52 @@ def modify_semantic_label(proj_path, proj_label, label_num):
             proj_label[i] = 0
 
     file = open(os.path.join(proj_path, proj_filename), "w")
+    # proj_label = proj_label.reshape(64, 1024)
     proj_label.tofile(file)
-    file.close
+    # file.close
+
+    return proj_label
+
+
+def create_proj_image(projimg_path, proj_label, label_num):
+    if not os.path.exists(projimg_path):
+        os.makedirs(projimg_path)
+    # dtype = np.uint32
+    # label = np.fromfile("new_000003.label", dtype)
+    pixel_color = KITTI_LABEL_COLORS[proj_label]
+    pixel_color_image = np.reshape(pixel_color, (64, 1024, 3))
+
+    # # Save the image using Pillow module.
+    image = (np.asarray(pixel_color_image)).astype(np.uint8)
+    image = Image.fromarray(image)
+    projimg_filename = "%06d.png" % label_num
+    image_path = os.path.join(projimg_path, projimg_filename)
+    image.save(image_path)
+
+# def create_proj_image(projimg_path, proj_label, label_num):
+#     # proj_label = np.reshape(proj_label, (65536, 1))
+#     if not os.path.exists(projimg_path):
+#         os.makedirs(projimg_path)
+#     proj_label = proj_label.reshape(-1)
+#     # print(len(proj_label))
+#     proj_label = proj_label.astype(np.uint32)
+#     sem_label_color = []
+#     for i in range(len(proj_label)):
+#         sem_label_color.append(KITTI_LABEL_COLORS[int(proj_label[i] & 0xFFFF)])
+#
+#     sem_label_color = np.reshape(sem_label_color, (64, 1024, 3))
+#     image = (np.asarray(sem_label_color)).astype(np.uint8)
+#     image = Image.fromarray(image)
+#     projimg_filename = "%06d.png" % label_num
+#     image_path = os.path.join(projimg_path, projimg_filename)
+#     image.save(image_path)
 
 
 
 if __name__ == "__main__":
-    velo_path= "/home/prathamesh/Downloads/data_odometry_velodyne/dataset/sequences/00/velodyne/"
-    label_path = "/home/prathamesh/Downloads/data_odometry_labels/dataset/sequences/00/labels/"
-    proj_velo_path = "/home/prathamesh/Downloads/data_odometry_velodyne_proj/dataset/sequences/00/velodyne/"
-    proj_label_path = "/home/prathamesh/Downloads/data_odometry_labels_proj/dataset/sequences/00/labels/"
-    do_projection(velo_path, proj_velo_path, label_path, proj_label_path)
+    velo_path = "/home/prathamesh/Downloads/data_odometry_velodyne/dataset/sequences/08/velodyne/"
+    label_path = "/home/prathamesh/Downloads/data_odometry_labels/dataset/sequences/08/labels/"
+    proj_velo_path = "/home/prathamesh/Downloads/data_odometry_velodyne_proj/dataset/sequences/08/velodyne/"
+    proj_label_path = "/home/prathamesh/Downloads/data_odometry_labels_proj/dataset/sequences/08/labels/"
+    proj_labelimage_path = "/home/prathamesh/Downloads/data_odometry_labels_projimg/dataset/sequences/08/labels/"
+    do_projection(velo_path, proj_velo_path, label_path, proj_label_path, proj_labelimage_path)
