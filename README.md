@@ -22,7 +22,7 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
   2. Copy and paste the file `src/utils/datacollector.py`(in this repo) inside your installed carla package at location `PythonAPI/examples` folder.
   3. Open another terminal inside `PythonAPI/example` and run following command to start collecting data:
   ``` 
-  python3 datacollector.py --sync -m Town01 -l --res 1024x64  
+  python3 datacollector.py --sync -m Town01 -l  
   ```
   4. Optional- Run in parallel in new terminal 
   ```
@@ -78,5 +78,19 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
                   │   │     │     │    ├ WorldSnapshot(frame=27)_3_new.label
                   ├── Town02/
                   ├── Town03/
+```
 
-            
+`lidar_semseg/images` contains Spherically Projected images(Range-view). 
+`lidar_semseg/raw_data/updated_ground_truth` contains label remapping for only 3 classes:
+  a. 0 - background
+  b. 1 - car
+  c. 2 - pedestrians
+  
+  ## Semantic-KITTI modifier:
+  1. Download dataset - [Semantic KITTI](http://www.semantic-kitti.org/dataset.html)
+  2. Run `KITTI_data_modifer.py` to create projected bin files, label files and images of given sequence `data_odometry_velodyne_proj, data_odometry_labels_projimg, data_odometry_labels_proj`.
+  3. Semantic KITTI labels are remapped corresponding to Carla labels.
+  
+  
+  
+  
