@@ -93,8 +93,26 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
   1. Download dataset - [Semantic KITTI](http://www.semantic-kitti.org/dataset.html)
   2. Run `KITTI_data_modifer.py` to create projected bin files, label files and images of given sequence `data_odometry_velodyne_proj, data_odometry_labels_projimg, data_odometry_labels_proj`.
   3. Semantic KITTI labels are remapped corresponding to Carla labels.
+ 
+  ## Training the Model:
+  1. Make sure you are inside /src folder and then run the following command to set PYTHONPATH for utils folder.
+  ```
+  export PYTHONPATH=$PYTHONPATH:$(pwd)/utils
+  ```
+  2. After this, To train the model Run the following command:
+  ```
+  python3 nets/modified_SqueezeSeg_Tensorflow.py 3 0 6 50
+  ```
+  Here, You can change the parameters as per your needs. 
+  a. The First integer (3) denotes the number of classes for which the model has to learn to segment (this has to be same compared to the number of classes in your ground truth labels).
+  b. If you want to test the model, you need to set the second argument to 1.
+  c. The third argument sets the batch size.
+  d. The Fourth argument sets the Number of Epochs.
   
-  
+  3. For Testing, Run the following command:
+  ```
+  python3 nets/modified_SqueezeSeg_Tensorflow.py 3 1 6 50
+  ```
   ## Our Results:
   
   ### Ground-truth_01:
