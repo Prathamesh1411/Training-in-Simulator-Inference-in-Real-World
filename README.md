@@ -93,6 +93,10 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
   
   
   ## Our Results:
-
-![Results](results/predicted_kitti.gif)
+  
+  ### Ground-truth:
+  ![Results](results/labels_kitti.gif)
+  
+  ### Predicted:
+  ![Results](results/predicted_kitti.gif)
   
