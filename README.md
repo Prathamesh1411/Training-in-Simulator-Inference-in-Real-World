@@ -104,10 +104,10 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
   python3 nets/modified_SqueezeSeg_Tensorflow.py 3 0 6 50
   ```
   Here, You can change the parameters as per your needs. 
-  a. The First integer (3) denotes the number of classes for which the model has to learn to segment (this has to be same compared to the number of classes in your ground truth labels).
-  b. If you want to test the model, you need to set the second argument to 1.
-  c. The third argument sets the batch size.
-  d. The Fourth argument sets the Number of Epochs.
+  * The First integer (3) denotes the number of classes for which the model has to learn to segment (this has to be same compared to the number of classes in your ground truth labels).
+  * If you want to test the model, you need to set the second argument to 1.
+  * The third argument sets the batch size.
+  * The Fourth argument sets the Number of Epochs.
   
   3. For Testing, Run the following command:
   ```
@@ -132,4 +132,10 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
   
   ### Predicted:
   ![Results](results/predicted_kitti.gif)
+  
+  ### Loss Curve:
+  <figure><img src="results/recall_loss_kitti.jpg" alt="LossvsEpoch" style="width:50%"><figcaption align = "center"><b>Trained on Kitti dataset </b></figcaption></figure>
+  
+  <figure><img src="results/recall_loss_carla_kitti.jpg" alt="LossvsEpoch" style="width:50%"><figcaption align = "center"><b>Trained on Carla+Kitti combined dataset</b></figcaption></figure>
+
   
