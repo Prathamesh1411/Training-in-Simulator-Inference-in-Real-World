@@ -77,14 +77,17 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
                   │   │     │     │    ├ WorldSnapshot(frame=26)_3_new.label
                   │   │     │     │    ├ WorldSnapshot(frame=27)_3_new.label
                   ├── Town02/
-                  ├── Town03/
+                  .
+                  .
+                  .
+                  └── Town05/
 ```
 
 `lidar_semseg/images` contains Spherically Projected images(Range-view). 
 `lidar_semseg/raw_data/updated_ground_truth` contains label remapping for only 3 classes:
-  a. 0 - background
-  b. 1 - car
-  c. 2 - pedestrians
+  * 0 - background
+  * 1 - car
+  * 2 - pedestrians
   
   ## Semantic-KITTI modifier:
   1. Download dataset - [Semantic KITTI](http://www.semantic-kitti.org/dataset.html)
@@ -92,5 +95,23 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
   3. Semantic KITTI labels are remapped corresponding to Carla labels.
   
   
+  ## Our Results:
   
+  ### Ground-truth_01:
+  ![Results01](results/ground_truth/001383.png) 
+  
+  ### Predicted_01:
+  ![Results01](results/predicted/predicted_1383.png)
+  
+  ### Ground-truth_02:
+  ![Results02](results/ground_truth/001607.png)
+  
+  ### Predicted_02:
+  ![Results02](results/predicted/predicted_1607.png)
+  
+  ### Ground-truth:
+  ![Results](results/labels_kitti.gif)
+  
+  ### Predicted:
+  ![Results](results/predicted_kitti.gif)
   
