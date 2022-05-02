@@ -77,7 +77,10 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
                   │   │     │     │    ├ WorldSnapshot(frame=26)_3_new.label
                   │   │     │     │    ├ WorldSnapshot(frame=27)_3_new.label
                   ├── Town02/
-                  ├── Town03/
+                  .
+                  .
+                  .
+                  └── Town05/
 ```
 
 `lidar_semseg/images` contains Spherically Projected images(Range-view). 
