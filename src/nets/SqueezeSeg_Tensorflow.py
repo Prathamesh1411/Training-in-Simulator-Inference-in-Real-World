@@ -1,6 +1,6 @@
-# import os
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  #Uncomment this line if you want to train on CPU
 # Import Necessary Libraries
+import argparse
 import tensorflow as tf
 from tensorflow.keras.layers import Input, concatenate
 from tensorflow.keras.models import Model
@@ -9,12 +9,23 @@ from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.losses import sparse_categorical_crossentropy
 from dataloader import load_data
 import numpy as np
-# from tensorflow.keras.metrics import MeanIoU
+from tensorflow.keras.metrics import MeanIoU
 from sklearn.utils import class_weight
 from sklearn.preprocessing import LabelEncoder
 import tensorflow.keras.backend as K
 from tensorflow.python.keras.layers import Lambda
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
+
+parser = argparse.ArgumentParser(description='Input Number of Classes that you want the model to segment')
+parser.add_argument('classes', type=int, nargs='+',help='an integer for number of classes')
+parser.add_argument('testing', type=int, nargs='+',help='Testing Mode (By Default = 0')
+parser.add_argument('batch_size', type=int, nargs='+',help='Set Batch Size')
+parser.add_argument('epoch', type=int, nargs='+',help='Set Number of Epochs')
+args = parser.parse_args()
+N = args.classes
+batch_size = args.batch_size[0]
+epoch = args.epoch[0]
+testing = args.testing[0]
 
 # Weighted Categorical CrossEntropy
 def weighted_categorical_crossentropy(weights):
@@ -27,7 +38,7 @@ def weighted_categorical_crossentropy(weights):
 # Recall Loss
 def recall_loss(weights):
     def recall_loss_fixed(y_true,y_pred):
-        y_pred_onehot = tf.one_hot(tf.argmax(y_pred,axis=3),depth = 3)
+        y_pred_onehot = tf.one_hot(tf.argmax(y_pred,axis=3),depth = N[0])
         true_positive = tf.reduce_sum((y_pred_onehot * y_true), axis=3)
         total_target = tf.reduce_sum(y_true, axis=3)
         recall = (true_positive + 1e-5) / (total_target + 1e-5)
@@ -53,19 +64,16 @@ def recall_loss_semantic_seg(weights):
     W = y_pred.shape[2]
     C = y_pred.shape[3]
     predict = tf.argmax(y_pred, axis=3)
-    y_predict_one_hot = tf.one_hot(tf.argmax(y_pred,axis=3),depth = 3)
+    y_predict_one_hot = tf.one_hot(tf.argmax(y_pred,axis=3),depth = C)
     y_true = K.cast(y_true, dtype = 'int32')
-    y_true_one_hot_ = tf.one_hot(y_true,depth = 3)
-    y_true_one_hot = tf.reshape(y_true_one_hot_, [N,(H*W),3])
-    y_predict_one_hot = tf.reshape(y_predict_one_hot,[N,(H*W),3])
+    y_true_one_hot_ = tf.one_hot(y_true,depth = C)
+    y_true_one_hot = tf.reshape(y_true_one_hot_, [N,(H*W),C])
+    y_predict_one_hot = tf.reshape(y_predict_one_hot,[N,(H*W),C])
     true_positive = tf.reduce_sum((y_predict_one_hot * y_true_one_hot), axis = 1)
     total_target = tf.reduce_sum(y_true_one_hot, axis = 1)
     recall = (true_positive) / (total_target + 1e-10)
     weight = weights / np.sum(weights)
-    print("X_train shape = {}".format(x_train.shape))
-    print("Y_train shape = {}".format(y_train.shape))
     spares = K.sparse_categorical_crossentropy(y_true, y_pred)
-    print("Calculated Categorical loss")
     loss = (1-tf.reduce_mean(recall * weight)) * spares
     return loss
   return recall_loss_inner
@@ -93,7 +101,7 @@ def Deconv_fire_module (filter_series,filter_deconv, filter_parallel_1,filter_pa
 
 def getClassWeights(y_train):
   # One Hot Encoding
-  y_train_one_hot = tf.keras.utils.to_categorical(y_train,num_classes = 3)
+  # y_train_one_hot = tf.keras.utils.to_categorical(y_train,num_classes = N[0])
 
   # Get Class Wise Weights 
   y_train_reshaped = y_train.reshape(-1,1)
@@ -183,11 +191,11 @@ def getModel():
   x = tf.keras.layers.Add()([firedeconv13, conv1b])
 
   # Final Conv Layer
-  output = tf.keras.layers.Conv2D(filters= 3, kernel_size=(1,1), strides= (1,1), padding='same', activation='softmax',name='Conv14')(x)
+  output = tf.keras.layers.Conv2D(filters= N[0], kernel_size=(1,1), strides= (1,1), padding='same', activation='softmax',name='Conv14')(x)
 
   # Build Model Using Functional API
   model = tf.keras.Model(inputs = input_shape,outputs = output)
-
+  model.summary()
   return model  
 
 def train(x_train,y_train,model):
@@ -197,8 +205,8 @@ def train(x_train,y_train,model):
   model.compile(optimizer = adam,loss = recall_)
   checkpointer = ModelCheckpoint(filepath = "model.weights.best.hdf5",verbose = 1, save_best_only=True)
   print("TRAINING STARTED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-  history = model.fit(x_train, y_train,batch_size=6,epochs=50,validation_split = 0.35,callbacks= [checkpointer])
-  return history,model
+  history = model.fit(x_train, y_train,batch_size=batch_size,epochs=epoch,validation_split = 0.35,callbacks= [checkpointer])
+  return history, model
 
 def showLossPlot(history):
   loss = history.history['loss']
@@ -214,25 +222,28 @@ def showLossPlot(history):
   plt.show()
 
 if __name__ == '__main__':
-  print("Inside Main")
-  testing = False
   model = getModel()
   # Load Training Data
-  if testing == False:
-    x_train,y_train = load_data(path='/work/pbhamare/dataset/new_dataset',normalized = True,shuffle=True)
+  
+  if testing == 0:
+    # x_train,y_train = load_data(path='/work/pbhamare/dataset/new_dataset',normalized = True,shuffle=True)
+    x_train = np.load("/home/sagar/Coursework/DL/test_carla_kitti.npy")[20:]
+    y_train = np.load("/home/sagar/Coursework/DL/test_carla_kitti_labels.npy")[20:].astype(np.int32)
     history= train(x_train,y_train,model)
-    showLossPlot(history)
+    # print(type(history[0]))
+    showLossPlot(history[0])
   else:
-    x_test,y_test = load_train_carla(normalized = True)
+    # x_test,y_test = load_data(path='/work/pbhamare/dataset/new_dataset',normalized = True,shuffle=True)
+    x_test = np.load("/home/sagar/Coursework/DL/test_carla_kitti.npy")[20:]
+    y_test = np.load("/home/sagar/Coursework/DL/test_carla_kitti_labels.npy")[20:].astype(np.int32)
     model.load_weights("model.weights.best.hdf5")
     #IOU
     y_pred=model.predict(x_test)
     y_pred_argmax=np.argmax(y_pred, axis=3)
-    n_classes = 3
+    n_classes = N[0]
     IOU_keras = MeanIoU(num_classes=n_classes)  
     IOU_keras.update_state(y_test, y_pred_argmax)
     print("Mean IoU =", IOU_keras.result().numpy())
-
     values = np.array(IOU_keras.get_weights()).reshape(n_classes, n_classes)
     print(values)
     class1_IoU = values[0,0]/(values[0,0] + values[0,1] + values[0,2] + values[1,0]+ values[2,0])
@@ -243,12 +254,12 @@ if __name__ == '__main__':
     print("IoU for class2 is: ", class2_IoU)
     print("IoU for class3 is: ", class3_IoU)
 
-    for i in range(0,x_test.shape[0]):
-      plt.figure()
-      plt.subplot(121)
-      string_path_pred = "/" + str(i) + ".png"
-      string_path_label = "/" + str(i) + ".png"
-      plt.imshow(y_pred_argmax[i], cmap='gray')
-      plt.subplot(122)
-      plt.imshow(y_test[i], cmap='gray')
-      plt.savefig(string_path_label)
+    # for i in range(0,x_test.shape[0]):
+    #   plt.figure()
+    #   plt.subplot(121)
+    #   string_path_pred = "/" + str(i) + ".png"
+    #   string_path_label = "/" + str(i) + ".png"
+    #   plt.imshow(y_pred_argmax[i], cmap='gray')
+    #   plt.subplot(122)
+    #   plt.imshow(y_test[i], cmap='gray')
+    #   plt.savefig(string_path_label, dpi = 200)
