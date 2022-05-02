@@ -85,9 +85,9 @@ Deep learning in the research field of autonomous driving systems (ADS) always s
 
 `lidar_semseg/images` contains Spherically Projected images(Range-view). 
 `lidar_semseg/raw_data/updated_ground_truth` contains label remapping for only 3 classes:
-  a. 0 - background
-  b. 1 - car
-  c. 2 - pedestrians
+  * 0 - background
+  * 1 - car
+  * 2 - pedestrians
   
   ## Semantic-KITTI modifier:
   1. Download dataset - [Semantic KITTI](http://www.semantic-kitti.org/dataset.html)
